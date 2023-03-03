@@ -30,6 +30,45 @@
 
 ;;; Code:
 
+
+;;; Customization
+
+(defgroup electric-ospl nil
+  "Customization for electric-ospl.
+
+electric-ospl is an electric SPC that helps to make
+one-sentence-per-line editing slightly easier."
+  :group 'text)
+
+(defcustom electric-ospl-regexps (list (sentence-end))
+  "Definitions of the end of a sentence.
+
+This defaults to what the function `sentence-end' returns at load
+time."
+  :group 'electric-ospl
+  :type '(repeat regexp))
+
+(defcustom electric-ospl-ignored-abbreviations (list "et al."
+                                                     "etc."
+                                                     "i.e."
+                                                     "e.g."
+                                                     "vs."
+                                                     "viz.")
+  "A list of (case-sensitive) abbrevations which may not end sentences.
+
+It is generally a good idea to customize this based on your
+writing and those which you frequently use."
+  :group 'electric-ospl
+  :type '(repeat (string :tag "Abbreviation")))
+
+(defcustom electric-ospl-maximum-lookback-chars 1
+  "How far is lookback performed to find a sentence ending.
+
+This should be calculated from the longest possible match to
+`electric-ospl-regexps'."
+  :type 'electric-ospl
+  :type 'integer)
+
 (provide 'electric-ospl)
 
 ;;; electric-ospl.el ends here
