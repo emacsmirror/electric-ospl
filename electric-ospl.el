@@ -158,13 +158,13 @@ This variable is automatically generated from
 `electric-ospl-regexps' and upon its change.  Do not modify it
 directly.")
 
-(defun electric-ospl--update-sse-regexp (_symbol new-value op _where)
-  "Update `electric-ospl--single-sentence-end-regexp' using NEW-VALUE when OP is `set'."
+(defun electric-ospl--update-sse-regexp (_symbol new-val op _where)
+  "Change `electric-ospl--single-sentence-end-regexp' with NEW-VAL when OP is `set'."
   (when (eq op 'set)
     (setf electric-ospl--single-sentence-end-regexp
           (s-concat "\\(?:" (s-join "\\|" (mapcar #'(lambda (regexp)
                                                       (s-concat "\\(?:" regexp "\\)"))
-                                                  new-value))
+                                                  new-val))
                     "\\)"))))
 
 (add-variable-watcher 'electric-ospl-regexps
@@ -189,9 +189,10 @@ command is repeated, delete the line-break."
          (at-electric-p (save-match-data
                           (looking-back electric-ospl--single-sentence-end-regexp
                                         electric-ospl-maximum-lookback-chars)))
-         (at-last-upper-p (save-match-data
-                            (looking-back (s-concat "[[:upper:]]" electric-ospl--single-sentence-end-regexp)
-                                          (1+ electric-ospl-maximum-lookback-chars)))))
+         ;; (at-last-upper-p (save-match-data
+         ;;                    (looking-back (s-concat "[[:upper:]]" electric-ospl--single-sentence-end-regexp)
+         ;;                                  (1+ electric-ospl-maximum-lookback-chars))))
+         )
     (delete-char -1)                    ; Character is probably no longer needed
     (cond
      ((and repeated-p (bolp))
