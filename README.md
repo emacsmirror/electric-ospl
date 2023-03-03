@@ -17,7 +17,17 @@ There are a couple of options which can be used to modify behavior (and speed) o
 
  - The first is `electric-ospl-regexps`, which sets the list of regular expressions defining how a sentence ends.
  - The next is `electric-ospl-ignored-abbreviations`, which is a (case-sensitive) list of abbrevations ending in a period that are not necessarily considered the end of a sentence.
- - Finally, efficiency may be modified by changing `electric-ospl-maximum-lookback-chars`, which determines how far to look back to find the end of a sentence.
+ - Next, efficiency may be modified by changing `electric-ospl-maximum-lookback-chars`, which determines how far to look back to find the end of a sentence.
+ - Finally, you can configure ignoring of OSPL in certain circumstances using the `ospl-ignore-electric-functions` hook.  This variable defaults to ignoring when the last thing was in the ignored abbreviations list.  It is used by checking, one-by-one for a function which returns non-nil.  An example use is below.
+ 
+```elisp
+(add-hook 'LaTeX-mode-hook (defun my/latex-ospl-config ()
+                             (add-hook 'electric-ospl-ignore-electric-functions
+                                       (defun my/ignore-ospl-in-some-latex-envs ()
+                                         (cl-member (LaTeX-current-environment)
+                                                    '("tabular" "tabularx" "tikzpicture")))
+                                       -100 t)))
+```
  
 Additionally, where the globalized mode is enabled is configured using `electric-ospl-global-modes`, which has the following semantics.
 

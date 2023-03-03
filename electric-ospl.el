@@ -1,7 +1,7 @@
 ;;; electric-ospl.el --- Electric OSPL Mode -*- lexical-binding: t -*-
 
 ;; Author: Samuel W. Flint <swflint@flintfam.org>
-;; Version: 1.6.0
+;; Version: 1.7.0
 ;; Package-Requires: ((emacs "26.1") (s "1.11.0"))
 ;; Keywords: convenience, text
 ;; URL: https://git.sr.ht/~swflint/electric-ospl-mode
@@ -52,11 +52,27 @@
 ;;   (case-sensitive) list of abbrevations ending in a period that are
 ;;   not necessarily considered the end of a sentence.
 ;;
-;; - Finally, efficiency may be modified by changing
+;; - Next, efficiency may be modified by changing
 ;;   `electric-ospl-maximum-lookback-chars', which determines how far
-;;   to look back to find the end of a sentence.  Additionally, where
-;;   the globalized mode is enabled is configured using
-;;   `electric-ospl-global-modes`, which has the following semantics.
+;;   to look back to find the end of a sentence.
+;;
+;;  - Finally, you can configure ignoring of OSPL in certain
+;;    circumstances using the `ospl-ignore-electric-functions` hook.
+;;    This variable defaults to ignoring when the last thing was in
+;;    the ignored abbreviations list.  It is used by checking,
+;;    one-by-one for a function which returns non-nil.  An example use
+;;    is below.
+;;
+;; (add-hook 'LaTeX-mode-hook (defun my/latex-ospl-config ()
+;;                              (add-hook 'electric-ospl-ignore-electric-functions
+;;                                        (defun my/ignore-ospl-in-some-latex-envs ()
+;;                                          (cl-member (LaTeX-current-environment)
+;;                                                     '("tabular" "tabularx" "tikzpicture")))
+;;                                        -100 t)))
+;;
+;; Additionally, where the globalized mode is enabled is configured
+;; using `electric-ospl-global-modes`, which has the following
+;; semantics.
 ;;
 ;; - If t, it will be enabled in all modes (except for special modes,
 ;;   ephemeral buffers, or the minibuffer).
@@ -125,6 +141,20 @@ This should be calculated from the longest possible match to
 `electric-ospl-regexps'."
   :group 'electric-ospl
   :type 'integer)
+
+(defcustom electric-ospl-ignore-electric-functions
+  (list #'electric-ospl-at-abbrev-p)
+  "Functions which are used to prevent insertion of an electric OSPL space.
+
+A function in this hook should return t if an electric space
+should not be inserted.  They are run one at a time, until one of
+these functions return non-nil.
+
+It may be useful to set this as a buffer-local hook in some
+modes (`LaTeX-mode' for instance, to not do OSPL in certain
+environments)."
+  :group 'electric-ospl
+  :type 'hook)
 
 (defcustom electric-ospl-global-modes t
   "Modes in which `global-electric-ospl-mode' should enable the local mode.
@@ -206,6 +236,15 @@ directly.")
                       #'electric-ospl--update-sse-regexp)
 
 
+;;; At Abbreviation?
+
+(defun electric-ospl-at-abbrev-p ()
+  "Are we currently at an abbrev?"
+  (save-match-data
+    (looking-back (s-concat "\\<" electric-ospl--ignored-abbrevs-regexp "\s?")
+                  (- (point) electric-ospl--abbrev-lookback))))
+
+
 ;;; Electric Space
 
 (defun electric-ospl-electric-space (arg)
@@ -218,22 +257,16 @@ command is repeated, delete the line-break."
   (let* ((case-fold-search nil)
          (repeated-p (or (> arg 1)
                          (eq last-command 'electric-ospl-electric-space)))
-         (at-abbrev-p (save-match-data
-                        (looking-back (s-concat "\\<" electric-ospl--ignored-abbrevs-regexp "\s?")
-                                      (- (point) electric-ospl--abbrev-lookback))))
          (at-electric-p (save-match-data
                           (looking-back electric-ospl--single-sentence-end-regexp
                                         electric-ospl-maximum-lookback-chars)))
-         ;; (at-last-upper-p (save-match-data
-         ;;                    (looking-back (s-concat "[[:upper:]]" electric-ospl--single-sentence-end-regexp)
-         ;;                                  (1+ electric-ospl-maximum-lookback-chars))))
-         )
+         (at-ignored-p (run-hook-with-args-until-success 'electric-ospl-ignore-electric-functions)))
     (delete-char -1)                    ; Character is probably no longer needed
     (cond
      ((and repeated-p (bolp))
       (delete-char -1)
       (self-insert-command 1))
-     ((and (not at-abbrev-p)
+     ((and (not at-ignored-p)
            at-electric-p)
       (newline)
       (indent-according-to-mode))
@@ -261,9 +294,7 @@ If ARG is passed, call the regular `fill-paragraph' instead."
                   (beginning-of-line)
                   (while (progn (forward-sentence)
                                 (<= (point) (marker-position end-boundary)))
-                    (unless (save-match-data
-                              (looking-back (s-concat "\\<" electric-ospl--ignored-abbrevs-regexp "\s?")
-                                            (- (point) electric-ospl--abbrev-lookback)))
+                    (unless (electric-ospl-at-abbrev-p)
                       (just-one-space)
                       (delete-char -1)
                       (newline)
