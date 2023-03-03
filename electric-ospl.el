@@ -166,6 +166,25 @@ command is repeated, delete the line-break."
       (newline))
      (t (self-insert-command 1)))))
 
+
+
+;;; Minor Mode Definition
+
+(defvar electric-ospl-mode-map
+  (let ((keymap (make-keymap)))
+    (define-key keymap (kbd "SPC") #'electric-ospl-electric-space)
+    keymap)
+  "Keymap for `electric-ospl-mode'.")
+
+;;;###autoload
+(define-minor-mode electric-ospl-mode
+  "A basic One-Sentence-Per-Line mode which defines an electric SPC key."
+  :lighter " OSPL" :keymap electric-ospl-mode-map
+  (if electric-ospl-mode
+      (message "Enabled `electric-ospl-mode'.")
+    (message "Disabled `electric-ospl-mode'.")))
+
+
 (provide 'electric-ospl)
 
 ;;; electric-ospl.el ends here
