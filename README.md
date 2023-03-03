@@ -9,6 +9,8 @@ A simple minor mode to automatically enforce a "one-sentence per line" style in 
 Place the file `electric-ospl.el` somewhere on your `load-path`, and `require` it (note, autoloading is also supported).
 Enable `electric-ospl-mode` anywhere where you want to follow a "one-sentence per line" style, for instance, by adding to various mode hooks (I use `text-mode-hook` personally).
 
+Additionally, a globalized minor mode, `global-electric-ospl-mode` is available, which will activate the mode based on the value of `electric-ospl-global-modes` (see below).
+
 ## Configuration
 
 There are a couple of options which can be used to modify behavior (and speed) of the mode.
@@ -16,6 +18,13 @@ There are a couple of options which can be used to modify behavior (and speed) o
  - The first is `electric-ospl-regexps`, which sets the list of regular expressions defining how a sentence ends.
  - The next is `electric-ospl-ignored-abbreviations`, which is a (case-sensitive) list of abbrevations ending in a period that are not necessarily considered the end of a sentence.
  - Finally, efficiency may be modified by changing `electric-ospl-maximum-lookback-chars`, which determines how far to look back to find the end of a sentence.
+ 
+Additionally, where the globalized mode is enabled is configured using `electric-ospl-global-modes`, which has the following semantics.
+
+ - If t, it will be enabled in all modes (except for special modes, ephemeral buffers, or the minibuffer).
+ - If nil, it will not be enabled in any modes.
+ - If the first symbol is `not`, `electric-ospl-mode` will not be enabled in buffers with the listed major modes or descending from the listed major modes.
+ - Otherwise, it will be enabled only in the listed modes.
 
 ## Acknowledgements
 

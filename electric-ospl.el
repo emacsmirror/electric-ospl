@@ -1,7 +1,7 @@
 ;;; electric-ospl.el --- Electric OSPL Mode -*- lexical-binding: t -*-
 
 ;; Author: Samuel W. Flint <swflint@flintfam.org>
-;; Version: 1.0.1
+;; Version: 1.5.0
 ;; Package-Requires: ((emacs "26.1") (s "1.11.0"))
 ;; Keywords: convenience, text
 ;; URL: https://git.sr.ht/~swflint/electric-ospl-mode
@@ -36,6 +36,10 @@
 ;; "one-sentence per line" style, for instance, by adding to various
 ;; mode hooks (I use `text-mode-hook' personally).
 ;;
+;; Additionally, a globalized minor mode, `global-electric-ospl-mode'
+;; is available, which will activate the mode based on the value of
+;; `electric-ospl-global-modes' (see below).
+;;
 ;;;; Configuration
 ;;
 ;; There are a couple of options which can be used to modify behavior
@@ -50,7 +54,20 @@
 ;;
 ;; - Finally, efficiency may be modified by changing
 ;;   `electric-ospl-maximum-lookback-chars', which determines how far
-;;   to look back to find the end of a sentence.
+;;   to look back to find the end of a sentence.  Additionally, where
+;;   the globalized mode is enabled is configured using
+;;   `electric-ospl-global-modes`, which has the following semantics.
+;;
+;; - If t, it will be enabled in all modes (except for special modes,
+;;   ephemeral buffers, or the minibuffer).
+;;
+;; - If nil, it will not be enabled in any modes.
+;;
+;; - If the first symbol is `not`, `electric-ospl-mode` will not be
+;;   enabled in buffers with the listed major modes or descending from
+;;   the listed major modes.
+;;
+;; - Otherwise, it will be enabled only in the listed modes.
 ;;
 ;;;; Acknowledgments
 ;;
@@ -106,9 +123,27 @@ writing and those which you frequently use."
 
 This should be calculated from the longest possible match to
 `electric-ospl-regexps'."
-  :type 'electric-ospl
+  :group 'electric-ospl
   :type 'integer)
 
+(defcustom electric-ospl-global-modes t
+  "Modes in which `global-electric-ospl-mode' should enable the local mode.
+
+If t, `electric-ospl-mode' is turned on for all major modes.  If
+a list, it is turned on for all `major-mode' symbols; however, if
+the `car' is `not', the mode is turned on for all modes not in
+that list (or not descending from that list).  If nil,
+`electric-ospl-mode' is never turned on automatically.
+
+The mode is never turned on for modes which are considered
+special or are ephemeral (have a space as prefix of the name)."
+  :group 'electric-ospl
+  :type '(choice (const t :tag "All modes")
+                 (const nil :tag "No modes")
+                 (set :menu-tag "certain modes" :tag "modes"
+                      :value (not)
+                      (const :tag "Forbid" not)
+                      (repeat :inline t (symbol :tag "mode")))))
 
 
 ;;; Cached Regular Expressions
@@ -203,6 +238,35 @@ command is repeated, delete the line-break."
       (newline))
      (t (self-insert-command 1)))))
 
+
+;;; Global Minor Mode Safety
+
+(defun electric-ospl-allowed-mode-p ()
+  "Should `global-electric-ospl-mode' enable the local mode in the current buffer?
+
+The mode will not be enabled in the following cases:
+
+ - In the minibuffer
+ - `special' modes
+ - `fundamental-mode'
+ - Ephemeral Buffers
+ - Major modes excluded by `electric-ospl-global-modes'"
+  (and (pcase electric-ospl-global-modes
+         (`t t)
+         (`(not . ,modes) (and (not (memq major-mode modes))
+                               (not (apply #'derived-mode-p modes))))
+         (modes (memq major-mode modes)))
+       (not (or (minibufferp)
+                (eq major-mode 'fundamental-mode)
+                (string-prefix-p " " (buffer-name))))))
+
+(defun electric-ospl-enable-mode ()
+  "Conditionally enable `electric-ospl-mode' in the current buffer.
+
+`electric-ospl-mode' will only be enabled when
+`electric-ospl-allowed-mode-p' is non-nil."
+  (when (electric-ospl-allowed-mode-p)
+    (electric-ospl-mode)))
 
 
 ;;; Minor Mode Definition
@@ -220,6 +284,11 @@ command is repeated, delete the line-break."
   (if electric-ospl-mode
       (message "Enabled `electric-ospl-mode'.")
     (message "Disabled `electric-ospl-mode'.")))
+
+;;;###autoload
+(define-globalized-minor-mode global-electric-ospl-mode electric-ospl-mode
+  electric-ospl-enable-mode
+  :init-value nil)
 
 
 (provide 'electric-ospl)
