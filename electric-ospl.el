@@ -163,9 +163,10 @@ directly.")
   (when (eq op 'set)
     (setf electric-ospl--single-sentence-end-regexp
           (s-concat "\\(?:" (s-join "\\|" (mapcar #'(lambda (regexp)
-                                                      (s-concat "\\(?:" regexp "\\)")))
-                                    new-value)
+                                                      (s-concat "\\(?:" regexp "\\)"))
+                                                  new-value))
                     "\\)"))))
+
 (add-variable-watcher 'electric-ospl-regexps
                       #'electric-ospl--update-sse-regexp)
 
