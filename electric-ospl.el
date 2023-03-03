@@ -137,6 +137,35 @@ directly.")
 (add-variable-watcher 'electric-ospl-regexps
                       #'electric-ospl--update-sse-regexp)
 
+
+;;; Electric Space
+
+(defun electric-ospl-electric-space (arg)
+  "Insert a space character, or an OSPL line break as appropriate.
+
+If ARG is given, insert a space, do not break line.  If the
+command is repeated, delete the line-break."
+  (interactive "p")
+  (self-insert-command 1)               ; Fool the sentence-end regular expressions...
+  (let* ((case-fold-search nil)
+         (repeated-p (or (> arg 1)
+                         (eq last-command 'electric-ospl-electric-space)))
+         (at-abbrev-p (looking-back (s-concat "\\<" electric-ospl--ignored-abbrevs-regexp "\s?")
+                                    (- (point) electric-ospl--abbrev-lookback)))
+         (at-electric-p (looking-back electric-ospl--single-sentence-end-regexp
+                                      electric-ospl-maximum-lookback-chars))
+         (at-last-upper-p (looking-back (s-concat "[[:upper:]]" electric-ospl--single-sentence-end-regexp)
+                                        (1+ electric-ospl-maximum-lookback-chars))))
+    (delete-char -1)                    ; Character is probably no longer needed
+    (cond
+     ((and repeated-p (bolp))
+      (delete-char -1)
+      (self-insert-command 1))
+     ((and (not at-abbrev-p)
+           at-electric-p)
+      (newline))
+     (t (self-insert-command 1)))))
+
 (provide 'electric-ospl)
 
 ;;; electric-ospl.el ends here
