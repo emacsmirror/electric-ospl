@@ -36,6 +36,8 @@
 
 ;;; Code:
 
+(require 's)
+
 
 ;;; Customization
 
@@ -74,6 +76,66 @@ This should be calculated from the longest possible match to
 `electric-ospl-regexps'."
   :type 'electric-ospl
   :type 'integer)
+
+
+
+;;; Cached Regular Expressions
+
+(defvar electric-ospl--ignored-abbrevs-regexp
+  (regexp-opt electric-ospl-ignored-abbreviations)
+  "Regular-expression for of `electric-ospl-ignored-abbreviations'.
+
+This variable is generated automatically, and upon change to the
+original variable.  Do not modify it directly.")
+
+(defun electric-ospl--update-ignored-abbrevs-regexp (_symbol new-value op _where)
+  "Update `electric-ospl--ignored-abbrevs-regexp' using NEW-VALUE when OP is `set'."
+  (when (eq op 'set)
+    (setf electric-ospl--ignored-abbrevs-regexp (regexp-opt new-value))))
+
+(add-variable-watcher 'electric-ospl-ignored-abbreviations
+                      #'electric-ospl--update-ignored-abbrevs-regexp)
+
+(defvar electric-ospl--abbrev-lookback
+  (+ 2 (apply #'max (mapcar #'length electric-ospl-ignored-abbreviations)))
+  "How far should look-back be performed for ignored abbreviations?
+
+This variable is generated automatically from
+`electric-ospl-ignored-abbreviations', and upon change to the
+original variable.  Do not modify it directly.")
+
+(defun electric-ospl--update-abbrev-lookback (_symbol new-value op _where)
+  "Update `electric-ospl--abbrev-lookback' using NEW-VALUE when OP is `set'."
+  (when (eq op 'set)
+    (setf electric-ospl--abbrev-lookback
+          (+ 2 (apply #'max
+                      (mapcar #'length
+                              new-value))))))
+
+(add-variable-watcher 'electric-ospl-ignored-abbreviations
+                      #'electric-ospl--update-abbrev-lookback)
+
+(defvar electric-ospl--single-sentence-end-regexp
+  (s-concat "\\(?:" (s-join "\\|" (mapcar #'(lambda (regexp)
+                                              (s-concat "\\(?:" regexp "\\)"))
+                                          electric-ospl-regexps))
+            "\\)")
+  "Single sentence-ending regular expression.
+
+This variable is automatically generated from
+`electric-ospl-regexps' and upon its change.  Do not modify it
+directly.")
+
+(defun electric-ospl--update-sse-regexp (_symbol new-value op _where)
+  "Update `electric-ospl--single-sentence-end-regexp' using NEW-VALUE when OP is `set'."
+  (when (eq op 'set)
+    (setf electric-ospl--single-sentence-end-regexp
+          (s-concat "\\(?:" (s-join "\\|" (mapcar #'(lambda (regexp)
+                                                      (s-concat "\\(?:" regexp "\\)")))
+                                    new-value)
+                    "\\)"))))
+(add-variable-watcher 'electric-ospl-regexps
+                      #'electric-ospl--update-sse-regexp)
 
 (provide 'electric-ospl)
 
