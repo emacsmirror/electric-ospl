@@ -25,7 +25,13 @@
 
 ;;; Commentary:
 ;;
-;; Foo
+;;
+;;
+;;;; Acknowledgments
+;; This code is based significantly on Jan Seeger's `twauctex'
+;; (https://github.com/jeeger/twauctex).  I've made effort to simplify
+;; the logic and make it so that it's usable in modes other than
+;; `LaTeX-mode'.
 
 
 ;;; Code:
