@@ -1,7 +1,7 @@
 ;;; electric-ospl.el --- Electric OSPL Mode -*- lexical-binding: t -*-
 
 ;; Author: Samuel W. Flint <swflint@flintfam.org>
-;; Version: 1.0.0
+;; Version: 1.0.1
 ;; Package-Requires: ((emacs "26.1") (s "1.11.0"))
 ;; Keywords: convenience, text
 ;; URL: https://git.sr.ht/~swflint/electric-ospl-mode
@@ -183,12 +183,15 @@ command is repeated, delete the line-break."
   (let* ((case-fold-search nil)
          (repeated-p (or (> arg 1)
                          (eq last-command 'electric-ospl-electric-space)))
-         (at-abbrev-p (looking-back (s-concat "\\<" electric-ospl--ignored-abbrevs-regexp "\s?")
-                                    (- (point) electric-ospl--abbrev-lookback)))
-         (at-electric-p (looking-back electric-ospl--single-sentence-end-regexp
-                                      electric-ospl-maximum-lookback-chars))
-         (at-last-upper-p (looking-back (s-concat "[[:upper:]]" electric-ospl--single-sentence-end-regexp)
-                                        (1+ electric-ospl-maximum-lookback-chars))))
+         (at-abbrev-p (save-match-data
+                        (looking-back (s-concat "\\<" electric-ospl--ignored-abbrevs-regexp "\s?")
+                                      (- (point) electric-ospl--abbrev-lookback))))
+         (at-electric-p (save-match-data
+                          (looking-back electric-ospl--single-sentence-end-regexp
+                                        electric-ospl-maximum-lookback-chars)))
+         (at-last-upper-p (save-match-data
+                            (looking-back (s-concat "[[:upper:]]" electric-ospl--single-sentence-end-regexp)
+                                          (1+ electric-ospl-maximum-lookback-chars)))))
     (delete-char -1)                    ; Character is probably no longer needed
     (cond
      ((and repeated-p (bolp))
