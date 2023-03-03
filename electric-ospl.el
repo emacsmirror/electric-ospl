@@ -1,7 +1,7 @@
 ;;; electric-ospl.el --- Electric OSPL Mode -*- lexical-binding: t -*-
 
 ;; Author: Samuel W. Flint <swflint@flintfam.org>
-;; Version: 1.5.0
+;; Version: 1.5.1
 ;; Package-Requires: ((emacs "26.1") (s "1.11.0"))
 ;; Keywords: convenience, text
 ;; URL: https://git.sr.ht/~swflint/electric-ospl-mode
@@ -235,7 +235,8 @@ command is repeated, delete the line-break."
       (self-insert-command 1))
      ((and (not at-abbrev-p)
            at-electric-p)
-      (newline))
+      (newline)
+      (indent-according-to-mode))
      (t (self-insert-command 1)))))
 
 
