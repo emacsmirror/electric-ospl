@@ -1,7 +1,7 @@
 ;;; electric-ospl.el --- Electric OSPL Mode -*- lexical-binding: t -*-
 
 ;; Author: Samuel W. Flint <swflint@flintfam.org>
-;; Version: 1.5.1
+;; Version: 1.6.0
 ;; Package-Requires: ((emacs "26.1") (s "1.11.0"))
 ;; Keywords: convenience, text
 ;; URL: https://git.sr.ht/~swflint/electric-ospl-mode
@@ -240,6 +240,37 @@ command is repeated, delete the line-break."
      (t (self-insert-command 1)))))
 
 
+;;; Refill as OSPL
+
+(defun electric-ospl-fill-ospl (&optional arg)
+  "Fill paragraph into one-sentence-per-line format.
+
+If ARG is passed, call the regular `fill-paragraph' instead."
+  (interactive "P")
+  (unless (and (bolp) (eolp))
+    (if (not arg)
+        (progn
+          (save-excursion
+            (save-match-data
+              (let ((fill-column most-positive-fixnum)
+                    (sentence-end electric-ospl--single-sentence-end-regexp))
+                (fill-paragraph)
+                (let ((end-boundary (save-excursion (forward-paragraph 1)
+                                                    (backward-sentence)
+                                                    (point-marker))))
+                  (beginning-of-line)
+                  (while (progn (forward-sentence)
+                                (<= (point) (marker-position end-boundary)))
+                    (unless (save-match-data
+                              (looking-back (s-concat "\\<" electric-ospl--ignored-abbrevs-regexp "\s?")
+                                            (- (point) electric-ospl--abbrev-lookback)))
+                      (just-one-space)
+                      (delete-char -1)
+                      (newline)
+                      (indent-according-to-mode))))))))
+      (fill-paragraph arg))))
+
+
 ;;; Global Minor Mode Safety
 
 (defun electric-ospl-allowed-mode-p ()
@@ -275,6 +306,7 @@ The mode will not be enabled in the following cases:
 (defvar electric-ospl-mode-map
   (let ((keymap (make-keymap)))
     (define-key keymap (kbd "SPC") #'electric-ospl-electric-space)
+    (define-key keymap (kbd "M-q") #'electric-ospl-fill-ospl)
     keymap)
   "Keymap for `electric-ospl-mode'.")
 
