@@ -1,8 +1,8 @@
 ;;; electric-ospl.el --- Electric OSPL Mode -*- lexical-binding: t -*-
 
 ;; Author: Samuel W. Flint <swflint@flintfam.org>
-;; Version: 1.7.0
-;; Package-Requires: ((emacs "26.1") (s "1.11.0"))
+;; Version: 1.7.1
+;; Package-Requires: ((emacs "26.1"))
 ;; Keywords: convenience, text
 ;; URL: https://git.sr.ht/~swflint/electric-ospl-mode
 ;; SPDX-License-Identifier: GPL-3.0-or-later
@@ -101,9 +101,6 @@
 
 ;;; Code:
 
-(require 's)
-
-
 ;;; Customization
 
 (defgroup electric-ospl nil
@@ -213,9 +210,10 @@ original variable.  Do not modify it directly.")
                       #'electric-ospl--update-abbrev-lookback)
 
 (defvar electric-ospl--single-sentence-end-regexp
-  (s-concat "\\(?:" (s-join "\\|" (mapcar #'(lambda (regexp)
-                                              (s-concat "\\(?:" regexp "\\)"))
-                                          electric-ospl-regexps))
+  (concat "\\(?:" (mapconcat  #'(lambda (regexp)
+                                              (concat "\\(?:" regexp "\\)"))
+                              electric-ospl-regexps
+                              "\\|")
             "\\)")
   "Single sentence-ending regular expression.
 
@@ -224,12 +222,13 @@ This variable is automatically generated from
 directly.")
 
 (defun electric-ospl--update-sse-regexp (_symbol new-val op _where)
-  "Change `electric-ospl--single-sentence-end-regexp' with NEW-VAL when OP is `set'."
+  "Change `electric-ospl--single-sentence-end-regexp' to NEW-VAL when OP is `set'."
   (when (eq op 'set)
     (setf electric-ospl--single-sentence-end-regexp
-          (s-concat "\\(?:" (s-join "\\|" (mapcar #'(lambda (regexp)
-                                                      (s-concat "\\(?:" regexp "\\)"))
-                                                  new-val))
+          (concat "\\(?:" (mapconcat #'(lambda (regexp)
+                                         (concat "\\(?:" regexp "\\)"))
+                                     new-val
+                                     "\\|")
                     "\\)"))))
 
 (add-variable-watcher 'electric-ospl-regexps
@@ -241,7 +240,7 @@ directly.")
 (defun electric-ospl-at-abbrev-p ()
   "Are we currently at an abbrev?"
   (save-match-data
-    (looking-back (s-concat "\\<" electric-ospl--ignored-abbrevs-regexp "\s?")
+    (looking-back (concat "\\<" electric-ospl--ignored-abbrevs-regexp "\s?")
                   (- (point) electric-ospl--abbrev-lookback))))
 
 
