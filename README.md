@@ -36,6 +36,9 @@ Additionally, where the globalized mode is enabled is configured using `electric
  - If the first symbol is `not`, `electric-ospl-mode` will not be enabled in buffers with the listed major modes or descending from the listed major modes.
  - Otherwise, it will be enabled only in the listed modes.
 
+It may also be configured using the `electric-ospl-allowed-override-commands` variable, which defines which bindings for SPC may be overridden.
+If the current binding for SPC is not in `electric-ospl-allowed-override-commands`, then the mode will not be activated locally.  This defaults to `self-insert-command` and `org-self-insert-command`.
+
 ## Acknowledgements
 
 This code is based quite significantly on Jan Seeger's [`twauctex`](https://github.com/jeeger/twauctex).

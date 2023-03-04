@@ -1,7 +1,7 @@
 ;;; electric-ospl.el --- Electric OSPL Mode -*- lexical-binding: t -*-
 
 ;; Author: Samuel W. Flint <swflint@flintfam.org>
-;; Version: 1.7.1
+;; Version: 1.8.0
 ;; Package-Requires: ((emacs "26.1"))
 ;; Keywords: convenience, text
 ;; URL: https://git.sr.ht/~swflint/electric-ospl-mode
@@ -71,7 +71,7 @@
 ;;                                        -100 t)))
 ;;
 ;; Additionally, where the globalized mode is enabled is configured
-;; using `electric-ospl-global-modes`, which has the following
+;; using `electric-ospl-global-modes', which has the following
 ;; semantics.
 ;;
 ;; - If t, it will be enabled in all modes (except for special modes,
@@ -79,11 +79,18 @@
 ;;
 ;; - If nil, it will not be enabled in any modes.
 ;;
-;; - If the first symbol is `not`, `electric-ospl-mode` will not be
+;; - If the first symbol is `not', `electric-ospl-mode' will not be
 ;;   enabled in buffers with the listed major modes or descending from
 ;;   the listed major modes.
 ;;
 ;; - Otherwise, it will be enabled only in the listed modes.
+;;
+;; It may also be configured using the
+;; `electric-ospl-allowed-override-commands' variable, which defines
+;; which bindings for SPC may be overridden.  If the current binding
+;; for SPC is not in `electric-ospl-allowed-override-commands', then
+;; the mode will not be activated locally.  This defaults to
+;; `self-insert-command' and `org-self-insert-command'.
 ;;
 ;;;; Acknowledgments
 ;;
@@ -171,6 +178,17 @@ special or are ephemeral (have a space as prefix of the name)."
                       :value (not)
                       (const :tag "Forbid" not)
                       (repeat :inline t (symbol :tag "mode")))))
+
+(defcustom electric-ospl-allowed-override-commands
+  (list #'self-insert-command
+        #'org-self-insert-command)
+  "List of bindings which `electric-ospl' is allowed to override.
+
+By default this will include only `org-self-insert-command' and
+`self-insert-command', but depending on your configuration,
+others may be appropriate as well."
+  :group 'electric-ospl
+  :type 'hook)
 
 
 ;;; Cached Regular Expressions
@@ -312,8 +330,10 @@ The mode will not be enabled in the following cases:
  - `special' modes
  - `fundamental-mode'
  - Ephemeral Buffers
- - Major modes excluded by `electric-ospl-global-modes'"
-  (and (pcase electric-ospl-global-modes
+ - Major modes excluded by `electric-ospl-global-modes'
+ - The binding of SPC is not in `electric-ospl-allowed-override-commands'."
+  (and (cl-member (key-binding (kbd "SPC")) electric-ospl-allowed-override-commands)
+       (pcase electric-ospl-global-modes
          (`t t)
          (`(not . ,modes) (and (not (memq major-mode modes))
                                (not (apply #'derived-mode-p modes))))
