@@ -1,7 +1,7 @@
 ;;; electric-ospl.el --- Electric OSPL Mode -*- lexical-binding: t -*-
 
 ;; Author: Samuel W. Flint <swflint@flintfam.org>
-;; Version: 1.8.0
+;; Version: 1.9.0
 ;; Package-Requires: ((emacs "26.1"))
 ;; Keywords: convenience, text
 ;; URL: https://git.sr.ht/~swflint/electric-ospl-mode
@@ -264,6 +264,12 @@ directly.")
 
 ;;; Electric Space
 
+(defvar-local electric-ospl-original-binding #'self-insert-command
+  "What was SPC originally bound to?
+
+This is called by `electric-ospl-electric-space' so that if a
+major mode does things a bit cleverly, it should work.")
+
 (defun electric-ospl-electric-space (arg)
   "Insert a space character, or an OSPL line break as appropriate.
 
@@ -282,12 +288,12 @@ command is repeated, delete the line-break."
     (cond
      ((and repeated-p (bolp))
       (delete-char -1)
-      (self-insert-command 1))
+      (funcall electric-ospl-original-binding 1))
      ((and (not at-ignored-p)
            at-electric-p)
       (newline)
       (indent-according-to-mode))
-     (t (self-insert-command 1)))))
+     (t (funcall electric-ospl-original-binding 1)))))
 
 
 ;;; Refill as OSPL
@@ -365,7 +371,10 @@ The mode will not be enabled in the following cases:
   "A basic One-Sentence-Per-Line mode which defines an electric SPC key."
   :lighter " OSPL" :keymap electric-ospl-mode-map
   (if electric-ospl-mode
-      (message "Enabled `electric-ospl-mode'.")
+      (progn
+        (setq-local electric-ospl-original-binding (let ((electric-ospl-mode nil))
+                                                     (key-binding (kbd "SPC"))))
+        (message "Enabled `electric-ospl-mode'."))
     (message "Disabled `electric-ospl-mode'.")))
 
 ;;;###autoload
