@@ -1,7 +1,7 @@
 ;;; electric-ospl.el --- Electric OSPL Mode -*- lexical-binding: t -*-
 
 ;; Author: Samuel W. Flint <swflint@flintfam.org>
-;; Version: 1.9.0
+;; Version: 1.9.1
 ;; Package-Requires: ((emacs "26.1"))
 ;; Keywords: convenience, text
 ;; URL: https://git.sr.ht/~swflint/electric-ospl-mode
@@ -181,7 +181,7 @@ special or are ephemeral (have a space as prefix of the name)."
 
 (defcustom electric-ospl-allowed-override-commands
   (list #'self-insert-command
-        #'org-self-insert-command)
+        'org-self-insert-command)
   "List of bindings which `electric-ospl' is allowed to override.
 
 By default this will include only `org-self-insert-command' and
@@ -228,11 +228,11 @@ original variable.  Do not modify it directly.")
                       #'electric-ospl--update-abbrev-lookback)
 
 (defvar electric-ospl--single-sentence-end-regexp
-  (concat "\\(?:" (mapconcat  #'(lambda (regexp)
-                                              (concat "\\(?:" regexp "\\)"))
+  (concat "\\(?:" (mapconcat  (lambda (regexp)
+                                (concat "\\(?:" regexp "\\)"))
                               electric-ospl-regexps
                               "\\|")
-            "\\)")
+          "\\)")
   "Single sentence-ending regular expression.
 
 This variable is automatically generated from
@@ -243,11 +243,11 @@ directly.")
   "Change `electric-ospl--single-sentence-end-regexp' to NEW-VAL when OP is `set'."
   (when (eq op 'set)
     (setf electric-ospl--single-sentence-end-regexp
-          (concat "\\(?:" (mapconcat #'(lambda (regexp)
-                                         (concat "\\(?:" regexp "\\)"))
+          (concat "\\(?:" (mapconcat (lambda (regexp)
+                                       (concat "\\(?:" regexp "\\)"))
                                      new-val
                                      "\\|")
-                    "\\)"))))
+                  "\\)"))))
 
 (add-variable-watcher 'electric-ospl-regexps
                       #'electric-ospl--update-sse-regexp)
