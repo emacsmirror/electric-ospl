@@ -1,7 +1,7 @@
 ;;; electric-ospl.el --- Electric OSPL Mode -*- lexical-binding: t -*-
 
 ;; Author: Samuel W. Flint <swflint@flintfam.org>
-;; Version: 1.9.1
+;; Version: 1.9.2
 ;; Package-Requires: ((emacs "26.1"))
 ;; Keywords: convenience, text
 ;; URL: https://git.sr.ht/~swflint/electric-ospl-mode
@@ -147,7 +147,7 @@ This should be calculated from the longest possible match to
   :type 'integer)
 
 (defcustom electric-ospl-ignore-electric-functions
-  (list #'electric-ospl-at-abbrev-p)
+  (list #'electric-ospl-at-indented-newline-p #'electric-ospl-at-abbrev-p)
   "Functions which are used to prevent insertion of an electric OSPL space.
 
 A function in this hook should return t if an electric space
@@ -260,6 +260,13 @@ directly.")
   (save-match-data
     (looking-back (concat "\\<" electric-ospl--ignored-abbrevs-regexp "\s?")
                   (- (point) electric-ospl--abbrev-lookback))))
+
+
+;;; At indented newline?
+
+(defun electric-ospl-at-indented-newline-p ()
+  "Are we currently at an (indented) newline?"
+  (save-match-data (looking-back (rx bol (* blank)) nil)))
 
 
 ;;; Electric Space
