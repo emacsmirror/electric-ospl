@@ -1,7 +1,7 @@
 ;;; electric-ospl.el --- Electric OSPL Mode -*- lexical-binding: t -*-
 
 ;; Author: Samuel W. Flint <swflint@flintfam.org>
-;; Version: 1.9.2
+;; Version: 2.0.0
 ;; Package-Requires: ((emacs "26.1"))
 ;; Keywords: convenience, text
 ;; URL: https://git.sr.ht/~swflint/electric-ospl-mode
@@ -283,24 +283,24 @@ major mode does things a bit cleverly, it should work.")
 If ARG is given, insert a space, do not break line.  If the
 command is repeated, delete the line-break."
   (interactive "p")
-  (self-insert-command 1)               ; Fool the sentence-end regular expressions...
-  (let* ((case-fold-search nil)
-         (repeated-p (or (> arg 1)
-                         (eq last-command 'electric-ospl-electric-space)))
-         (at-electric-p (save-match-data
-                          (looking-back electric-ospl--single-sentence-end-regexp
-                                        electric-ospl-maximum-lookback-chars)))
-         (at-ignored-p (run-hook-with-args-until-success 'electric-ospl-ignore-electric-functions)))
-    (delete-char -1)                    ; Character is probably no longer needed
-    (cond
-     ((and repeated-p (bolp))
-      (delete-char -1)
-      (funcall electric-ospl-original-binding 1))
-     ((and (not at-ignored-p)
-           at-electric-p)
-      (newline)
-      (indent-according-to-mode))
-     (t (funcall electric-ospl-original-binding 1)))))
+  (if (run-hook-with-args-until-success 'electric-ospl-ignore-electric-functions)
+      (funcall electric-ospl-original-binding 1)
+    (self-insert-command 1)               ; Fool the sentence-end regular expressions...
+    (let* ((case-fold-search nil)
+           (repeated-p (or (> arg 1)
+                           (eq last-command 'electric-ospl-electric-space)))
+           (at-electric-p (save-match-data
+                            (looking-back electric-ospl--single-sentence-end-regexp
+                                          electric-ospl-maximum-lookback-chars))))
+      (delete-char -1)                    ; Character is probably no longer needed
+      (cond
+       ((and repeated-p (bolp))
+        (delete-char -1)
+        (funcall electric-ospl-original-binding 1))
+       (at-electric-p
+        (newline)
+        (indent-according-to-mode))
+       (t (funcall electric-ospl-original-binding 1))))))
 
 
 ;;; Refill as OSPL
@@ -313,7 +313,7 @@ If ARG is passed, call the regular `fill-paragraph' instead."
   (unless (and (bolp) (eolp))
     (if (not arg)
         (progn
-          (save-excursion
+          (save-mark-and-excursion
             (save-match-data
               (let ((fill-column most-positive-fixnum)
                     (sentence-end electric-ospl--single-sentence-end-regexp))
