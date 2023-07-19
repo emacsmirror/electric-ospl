@@ -1,4 +1,5 @@
 [![REUSE status](https://api.reuse.software/badge/git.sr.ht/~swflint/electric-ospl-mode)](https://api.reuse.software/info/git.sr.ht/~swflint/electric-ospl-mode)
+[![MELPA](https://melpa.org/packages/electric-ospl-badge.svg)](https://melpa.org/#/electric-ospl)
 
 # electric-ospl-mode
 
