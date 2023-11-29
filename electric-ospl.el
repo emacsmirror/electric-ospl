@@ -1,7 +1,7 @@
 ;;; electric-ospl.el --- Electric OSPL Mode -*- lexical-binding: t -*-
 
 ;; Author: Samuel W. Flint <swflint@flintfam.org>
-;; Version: 2.2.0
+;; Version: 2.2.1
 ;; Package-Requires: ((emacs "26.1"))
 ;; Keywords: convenience, text
 ;; URL: https://git.sr.ht/~swflint/electric-ospl-mode
@@ -370,25 +370,24 @@ mode or similar does things cleverly, \\[universal-argument]
 If ARG is passed, call the regular `fill-paragraph' instead."
   (interactive "P")
   (unless (and (bolp) (eolp))
-    (if (not arg)
-        (progn
-          (save-mark-and-excursion
-            (save-match-data
-              (let ((fill-column most-positive-fixnum)
-                    (sentence-end electric-ospl--single-sentence-end-regexp))
-                (fill-paragraph)
-                (let ((end-boundary (save-excursion (forward-paragraph 1)
-                                                    (backward-sentence)
-                                                    (point-marker))))
-                  (beginning-of-line)
-                  (while (progn (forward-sentence)
-                                (<= (point) (marker-position end-boundary)))
-                    (unless (electric-ospl-at-abbrev-p)
-                      (just-one-space)
-                      (delete-char -1)
-                      (newline)
-                      (indent-according-to-mode))))))))
-      (funcall-interactively electric-ospl-original-fill-paragraph))))
+    (if arg
+        (funcall-interactively electric-ospl-original-fill-paragraph)
+      (save-mark-and-excursion
+        (save-match-data
+          (let ((fill-column most-positive-fixnum)
+                (sentence-end electric-ospl--single-sentence-end-regexp))
+            (fill-paragraph)
+            (let ((end-boundary (save-excursion (forward-paragraph 1)
+                                                (backward-sentence)
+                                                (point-marker))))
+              (beginning-of-line)
+              (while (progn (forward-sentence)
+                            (<= (point) (marker-position end-boundary)))
+                (unless (electric-ospl-at-abbrev-p)
+                  (just-one-space)
+                  (delete-char -1)
+                  (newline)
+                  (indent-according-to-mode))))))))))
 
 
 ;;; Global Minor Mode Safety
