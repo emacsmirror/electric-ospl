@@ -1,7 +1,7 @@
 ;;; electric-ospl.el --- Electric OSPL Mode -*- lexical-binding: t -*-
 
 ;; Author: Samuel W. Flint <swflint@flintfam.org>
-;; Version: 2.1.0
+;; Version: 2.2.0
 ;; Package-Requires: ((emacs "26.1"))
 ;; Keywords: convenience, text
 ;; URL: https://git.sr.ht/~swflint/electric-ospl-mode
@@ -357,6 +357,13 @@ command is repeated, delete the line-break."
 
 ;;; Refill as OSPL
 
+(defvar-local electric-ospl-original-fill-paragraph #'fill-paragraph
+  "What was M-q originally bound to?
+
+This is called by `electric-ospl-fill-ospl' so that, if a major
+mode or similar does things cleverly, \\[universal-argument]
+\\[electric-ospl-fill-ospl] works correctly.")
+
 (defun electric-ospl-fill-ospl (&optional arg)
   "Fill paragraph into one-sentence-per-line format.
 
@@ -381,7 +388,7 @@ If ARG is passed, call the regular `fill-paragraph' instead."
                       (delete-char -1)
                       (newline)
                       (indent-according-to-mode))))))))
-      (fill-paragraph arg))))
+      (funcall-interactively electric-ospl-original-fill-paragraph))))
 
 
 ;;; Global Minor Mode Safety
@@ -432,7 +439,9 @@ The mode will not be enabled in the following cases:
   (if electric-ospl-mode
       (progn
         (setq-local electric-ospl-original-binding (let ((electric-ospl-mode nil))
-                                                     (key-binding (kbd "SPC"))))
+                                                     (key-binding (kbd "SPC")))
+                    electric-ospl-original-fill-paragraph (let ((electric-ospl-mode nil))
+                                                            (key-binding (kbd "M-q"))))
         (message "Enabled `electric-ospl-mode'."))
     (message "Disabled `electric-ospl-mode'.")))
 
