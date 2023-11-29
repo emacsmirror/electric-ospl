@@ -1,7 +1,7 @@
 ;;; electric-ospl.el --- Electric OSPL Mode -*- lexical-binding: t -*-
 
 ;; Author: Samuel W. Flint <swflint@flintfam.org>
-;; Version: 2.3.0
+;; Version: 3.0.0
 ;; Package-Requires: ((emacs "26.1"))
 ;; Keywords: convenience, text
 ;; URL: https://git.sr.ht/~swflint/electric-ospl-mode
@@ -43,14 +43,17 @@
 ;;;; Configuration
 ;;
 ;; There are a couple of options which can be used to modify behavior
-;; (and speed) of the mode.
+;; (and speed) of the mode.  The variables noted with (CUSTOM) *must*
+;; be customized using either the customize interface or (on Emacs
+;; 29.1 or later) `setopt', because a setter is used to cache the
+;; regular expressions.
 ;;
-;; - The first is `electric-ospl-regexps', which sets the list of
-;;   regular expressions defining how a sentence ends.
+;; - The first is `electric-ospl-regexps' (CUSTOM), which sets the
+;;   list of regular expressions defining how a sentence ends.
 ;;
-;; - The next is `electric-ospl-ignored-abbreviations', which is a
-;;   (case-sensitive) list of abbrevations ending in a period that are
-;;   not necessarily considered the end of a sentence.
+;; - The next is `electric-ospl-ignored-abbreviations' (CUSTOM), which
+;;   is a (case-sensitive) list of abbrevations ending in a period
+;;   that are not necessarily considered the end of a sentence.
 ;;
 ;; - Next, efficiency may be modified by changing
 ;;   `electric-ospl-maximum-lookback-chars', which determines how far
@@ -110,11 +113,52 @@
 ;; If you find an error or have a patch to improve this package, please
 ;; send an email to `~swflint/public-inbox@lists.sr.ht`.
 
-
 
 ;;; Code:
 
+;;; Caching Regular Expressions
+
+(defvar electric-ospl--ignored-abbrevs-regexp ""
+  "Regular-expression for of `electric-ospl-ignored-abbreviations'.
+
+This variable is generated automatically, and upon change to the
+original variable.  Do not modify it directly.")
+
+(defvar electric-ospl--abbrev-lookback 0
+  "How far should look-back be performed for ignored abbreviations?
+
+This variable is generated automatically from
+`electric-ospl-ignored-abbreviations', and upon change to the
+original variable.  Do not modify it directly.")
+
+(defvar electric-ospl--single-sentence-end-regexp ""
+  "Single sentence-ending regular expression.
+
+This variable is automatically generated from
+`electric-ospl-regexps' and upon its change.  Do not modify it
+directly.")
+
+
 ;;; Customization
+
+(defun electric-ospl--cache-values (option new-value)
+  "Properly set OPTION with NEW-VALUE.
+
+In addition to setting the top-level value, these cache values automatically."
+  (set-default-toplevel-value option new-value)
+  (pcase option
+    ('electric-ospl-ignored-abbreviations
+     (setf electric-ospl--ignored-abbrevs-regexp (regexp-opt new-value)
+           electric-ospl--abbrev-lookback (+ 2 (apply #'max
+                                                      (mapcar #'length
+                                                              new-value)))))
+    ('electric-ospl-regexps
+     (setf electric-ospl--single-sentence-end-regexp
+           (concat "\\(?:" (mapconcat (lambda (regexp)
+                                        (concat "\\(?:" regexp "\\)"))
+                                      new-value
+                                      "\\|")
+                   "\\)")))))
 
 (defgroup electric-ospl nil
   "Customization for electric-ospl.
@@ -127,9 +171,14 @@ one-sentence-per-line editing slightly easier."
   "Definitions of the end of a sentence.
 
 This defaults to what the function `sentence-end' returns at load
-time."
+time.
+
+Note: This must be changed through the Customize interface or
+using the `setopt' macro."
   :group 'electric-ospl
-  :type '(repeat regexp))
+  :type '(repeat regexp)
+  :set #'electric-ospl--cache-values
+  :initialize 'custom-initialize-set)
 
 (defcustom electric-ospl-ignored-abbreviations (list "et al."
                                                      "etc."
@@ -140,9 +189,14 @@ time."
   "A list of (case-sensitive) abbrevations which may not end sentences.
 
 It is generally a good idea to customize this based on your
-writing and those which you frequently use."
+writing and those which you frequently use.
+
+Note: This must be changed through the Customize interface or
+using the `setopt' macro."
   :group 'electric-ospl
-  :type '(repeat (string :tag "Abbreviation")))
+  :type '(repeat (string :tag "Abbreviation"))
+  :set #'electric-ospl--cache-values
+  :initialize 'custom-initialize-set)
 
 (defcustom electric-ospl-maximum-lookback-chars 1
   "How far is lookback performed to find a sentence ending.
@@ -217,68 +271,6 @@ By default this will include only `org-self-insert-command' and
 others may be appropriate as well."
   :group 'electric-ospl
   :type 'hook)
-
-
-;;; Cached Regular Expressions
-
-(defvar electric-ospl--ignored-abbrevs-regexp
-  (regexp-opt electric-ospl-ignored-abbreviations)
-  "Regular-expression for of `electric-ospl-ignored-abbreviations'.
-
-This variable is generated automatically, and upon change to the
-original variable.  Do not modify it directly.")
-
-(defun electric-ospl--update-ignored-abbrevs-regexp (_symbol new-value op _where)
-  "Update `electric-ospl--ignored-abbrevs-regexp' using NEW-VALUE when OP is `set'."
-  (when (eq op 'set)
-    (setf electric-ospl--ignored-abbrevs-regexp (regexp-opt new-value))))
-
-(add-variable-watcher 'electric-ospl-ignored-abbreviations
-                      #'electric-ospl--update-ignored-abbrevs-regexp)
-
-(defvar electric-ospl--abbrev-lookback
-  (+ 2 (apply #'max (mapcar #'length electric-ospl-ignored-abbreviations)))
-  "How far should look-back be performed for ignored abbreviations?
-
-This variable is generated automatically from
-`electric-ospl-ignored-abbreviations', and upon change to the
-original variable.  Do not modify it directly.")
-
-(defun electric-ospl--update-abbrev-lookback (_symbol new-value op _where)
-  "Update `electric-ospl--abbrev-lookback' using NEW-VALUE when OP is `set'."
-  (when (eq op 'set)
-    (setf electric-ospl--abbrev-lookback
-          (+ 2 (apply #'max
-                      (mapcar #'length
-                              new-value))))))
-
-(add-variable-watcher 'electric-ospl-ignored-abbreviations
-                      #'electric-ospl--update-abbrev-lookback)
-
-(defvar electric-ospl--single-sentence-end-regexp
-  (concat "\\(?:" (mapconcat  (lambda (regexp)
-                                (concat "\\(?:" regexp "\\)"))
-                              electric-ospl-regexps
-                              "\\|")
-          "\\)")
-  "Single sentence-ending regular expression.
-
-This variable is automatically generated from
-`electric-ospl-regexps' and upon its change.  Do not modify it
-directly.")
-
-(defun electric-ospl--update-sse-regexp (_symbol new-val op _where)
-  "Change `electric-ospl--single-sentence-end-regexp' to NEW-VAL when OP is `set'."
-  (when (eq op 'set)
-    (setf electric-ospl--single-sentence-end-regexp
-          (concat "\\(?:" (mapconcat (lambda (regexp)
-                                       (concat "\\(?:" regexp "\\)"))
-                                     new-val
-                                     "\\|")
-                  "\\)"))))
-
-(add-variable-watcher 'electric-ospl-regexps
-                      #'electric-ospl--update-sse-regexp)
 
 
 ;;; At Abbreviation?

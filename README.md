@@ -15,9 +15,10 @@ Additionally, a globalized minor mode, `global-electric-ospl-mode` is available,
 ## Configuration
 
 There are a couple of options which can be used to modify behavior (and speed) of the mode.
+The variables noted with (CUSTOM) *must* be customized using either the customize interface or (on Emacs 29.1 or later) `setopt`, because a setter is used to cache the regular expressions.
 
- - The first is `electric-ospl-regexps`, which sets the list of regular expressions defining how a sentence ends.
- - The next is `electric-ospl-ignored-abbreviations`, which is a (case-sensitive) list of abbrevations ending in a period that are not necessarily considered the end of a sentence.
+ - The first is `electric-ospl-regexps` (CUSTOM), which sets the list of regular expressions defining how a sentence ends.
+ - The next is `electric-ospl-ignored-abbreviations` (CUSTOM), which is a (case-sensitive) list of abbrevations ending in a period that are not necessarily considered the end of a sentence.
  - Next, efficiency may be modified by changing `electric-ospl-maximum-lookback-chars`, which determines how far to look back to find the end of a sentence.
  - Additionally, the `electric-ospl-sentence-end-functions` hook determines if point is currently at the end of a sentence.
    It defaults to using the regexp returned by `sentence-end` but may be extended to use sentence-end determination logic provided by other packages.
