@@ -1,7 +1,7 @@
 ;;; electric-ospl.el --- Electric OSPL Mode -*- lexical-binding: t -*-
 
 ;; Author: Samuel W. Flint <swflint@flintfam.org>
-;; Version: 2.2.1
+;; Version: 2.3.0
 ;; Package-Requires: ((emacs "26.1"))
 ;; Keywords: convenience, text
 ;; URL: https://git.sr.ht/~swflint/electric-ospl-mode
@@ -338,7 +338,7 @@ If ARG is given, insert a space, do not break line.  If the
 command is repeated, delete the line-break."
   (interactive "p")
   (if (run-hook-with-args-until-success 'electric-ospl-ignore-electric-functions)
-      (funcall electric-ospl-original-binding 1)
+      (funcall-interactively electric-ospl-original-binding arg)
     (self-insert-command 1)               ; Fool the sentence-end regular expressions...
     (let* ((case-fold-search nil)
            (repeated-p (or (> arg 1)
@@ -348,11 +348,11 @@ command is repeated, delete the line-break."
       (cond
        ((and repeated-p (bolp))
         (delete-char -1)
-        (funcall electric-ospl-original-binding 1))
+        (funcall-interactively electric-ospl-original-binding 1))
        (at-electric-p
         (newline)
         (indent-according-to-mode))
-       (t (funcall electric-ospl-original-binding 1))))))
+       (t (funcall-interactively electric-ospl-original-binding arg))))))
 
 
 ;;; Refill as OSPL
