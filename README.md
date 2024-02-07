@@ -53,4 +53,4 @@ This package, however, is designed to simplify the logic and generalize it so th
 
 ## Errors and Patches
 
-If you find an error or have a patch to improve this package, please send an email to `~swflint/public-inbox@lists.sr.ht`.
+If you find an error or have a patch to improve this package, please send an email to `~swflint/emacs-utilities@lists.sr.ht`.
