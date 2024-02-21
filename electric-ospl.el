@@ -1,7 +1,7 @@
 ;;; electric-ospl.el --- Electric OSPL Mode -*- lexical-binding: t -*-
 
 ;; Author: Samuel W. Flint <swflint@flintfam.org>
-;; Version: 3.0.0
+;; Version: 3.1.0
 ;; Package-Requires: ((emacs "26.1"))
 ;; Keywords: convenience, text
 ;; URL: https://git.sr.ht/~swflint/electric-ospl-mode
@@ -349,8 +349,8 @@ command is repeated, delete the line-break."
 
 ;;; Refill as OSPL
 
-(defvar-local electric-ospl-original-fill-paragraph #'fill-paragraph
-  "What was M-q originally bound to?
+(defvar-local electric-ospl-original-fill-paragraph nil
+  "What was `fill-paragraph-function' originally?
 
 This is called by `electric-ospl-fill-ospl' so that, if a major
 mode or similar does things cleverly, \\[universal-argument]
@@ -379,7 +379,8 @@ If ARG is passed, call the regular `fill-paragraph' instead."
                   (just-one-space)
                   (delete-char -1)
                   (newline)
-                  (indent-according-to-mode))))))))))
+                  (indent-according-to-mode)))))))
+      t)))
 
 
 ;;; Global Minor Mode Safety
@@ -419,7 +420,6 @@ The mode will not be enabled in the following cases:
 (defvar electric-ospl-mode-map
   (let ((keymap (make-keymap)))
     (define-key keymap (kbd "SPC") #'electric-ospl-electric-space)
-    (define-key keymap (kbd "M-q") #'electric-ospl-fill-ospl)
     keymap)
   "Keymap for `electric-ospl-mode'.")
 
@@ -431,8 +431,8 @@ The mode will not be enabled in the following cases:
       (progn
         (setq-local electric-ospl-original-binding (let ((electric-ospl-mode nil))
                                                      (key-binding (kbd "SPC")))
-                    electric-ospl-original-fill-paragraph (let ((electric-ospl-mode nil))
-                                                            (key-binding (kbd "M-q"))))
+                    electric-ospl-original-fill-paragraph fill-paragraph-function
+                    fill-paragraph-function #'electric-ospl-fill-ospl)
         (message "Enabled `electric-ospl-mode'."))
     (message "Disabled `electric-ospl-mode'.")))
 
