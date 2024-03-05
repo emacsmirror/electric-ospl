@@ -1,7 +1,7 @@
 ;;; electric-ospl.el --- Electric OSPL Mode -*- lexical-binding: t -*-
 
 ;; Author: Samuel W. Flint <swflint@flintfam.org>
-;; Version: 3.1.0
+;; Version: 3.1.1
 ;; Package-Requires: ((emacs "26.1"))
 ;; Keywords: convenience, text
 ;; URL: https://git.sr.ht/~swflint/electric-ospl-mode
@@ -434,7 +434,8 @@ The mode will not be enabled in the following cases:
                     electric-ospl-original-fill-paragraph fill-paragraph-function
                     fill-paragraph-function #'electric-ospl-fill-ospl)
         (message "Enabled `electric-ospl-mode'."))
-    (message "Disabled `electric-ospl-mode'.")))
+    (message "Disabled `electric-ospl-mode'.")
+    (setq-local fill-paragraph-function electric-ospl-original-fill-paragraph)))
 
 ;;;###autoload
 (define-globalized-minor-mode global-electric-ospl-mode electric-ospl-mode
