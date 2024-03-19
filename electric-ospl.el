@@ -1,7 +1,7 @@
 ;;; electric-ospl.el --- Electric OSPL Mode -*- lexical-binding: t -*-
 
 ;; Author: Samuel W. Flint <swflint@flintfam.org>
-;; Version: 3.1.1
+;; Version: 3.1.2
 ;; Package-Requires: ((emacs "26.1"))
 ;; Keywords: convenience, text
 ;; URL: https://git.sr.ht/~swflint/electric-ospl-mode
@@ -282,7 +282,7 @@ This is configured using `electric-ospl-ignored-abbreviations', a
 list of abbreviations which end in a sentence-ending character."
   (save-excursion
     (save-match-data
-      (looking-back (concat "\\<" electric-ospl--ignored-abbrevs-regexp "\s?")
+      (looking-back (rx word-start (regexp electric-ospl--ignored-abbrevs-regexp) (? (syntax whitespace)))
                     (- (point) electric-ospl--abbrev-lookback)))))
 
 
