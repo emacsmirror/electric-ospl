@@ -1,7 +1,7 @@
 ;;; electric-ospl.el --- Electric OSPL Mode -*- lexical-binding: t -*-
 
 ;; Author: Samuel W. Flint <swflint@flintfam.org>
-;; Version: 3.1.2
+;; Version: 3.2.0
 ;; Package-Requires: ((emacs "26.1"))
 ;; Keywords: convenience, text
 ;; URL: https://git.sr.ht/~swflint/electric-ospl-mode
@@ -38,7 +38,9 @@
 ;;
 ;; Additionally, a globalized minor mode, `global-electric-ospl-mode'
 ;; is available, which will activate the mode based on the value of
-;; `electric-ospl-global-modes' (see below).
+;; `electric-ospl-global-modes' (see below).  Moreover,
+;; `global-electric-ospl-mode' can be disabled by setting the
+;; buffer-local `electric-ospl-forbid' variable to non-nil.
 ;;
 ;;;; Configuration
 ;;
@@ -261,6 +263,9 @@ special or are ephemeral (have a space as prefix of the name)."
                       (const :tag "Forbid" not)
                       (repeat :inline t (symbol :tag "mode")))))
 
+(defvar-local electric-ospl-forbid nil
+  "Set to non-nil to prevent electric-ospl from being enabled.")
+
 (defcustom electric-ospl-allowed-override-commands
   (list #'self-insert-command
         'org-self-insert-command)
@@ -396,7 +401,8 @@ The mode will not be enabled in the following cases:
  - Ephemeral Buffers
  - Major modes excluded by `electric-ospl-global-modes'
  - The binding of SPC is not in `electric-ospl-allowed-override-commands'."
-  (and (cl-member (key-binding (kbd "SPC")) electric-ospl-allowed-override-commands)
+  (and (not electric-ospl-forbid)
+       (cl-member (key-binding (kbd "SPC")) electric-ospl-allowed-override-commands)
        (pcase electric-ospl-global-modes
          (`t t)
          (`(not . ,modes) (and (not (memq major-mode modes))

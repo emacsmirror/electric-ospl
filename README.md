@@ -11,6 +11,7 @@ Place the file `electric-ospl.el` somewhere on your `load-path`, and `require` i
 Enable `electric-ospl-mode` anywhere where you want to follow a "one-sentence per line" style, for instance, by adding to various mode hooks (I use `text-mode-hook` personally).
 
 Additionally, a globalized minor mode, `global-electric-ospl-mode` is available, which will activate the mode based on the value of `electric-ospl-global-modes` (see below).
+Moreover, `global-electric-ospl-mode` can be disabled by setting the buffer-local `electric-ospl-forbid` variable to non-nil.
 
 ## Configuration
 
