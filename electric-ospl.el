@@ -1,7 +1,7 @@
 ;;; electric-ospl.el --- Electric OSPL Mode -*- lexical-binding: t -*-
 
 ;; Author: Samuel W. Flint <swflint@flintfam.org>
-;; Version: 3.3.0
+;; Version: 3.3.1
 ;; Package-Requires: ((emacs "26.1"))
 ;; Keywords: convenience, text
 ;; URL: https://git.sr.ht/~swflint/electric-ospl-mode
@@ -439,13 +439,10 @@ when `global-electric-ospl-mode' is enabled.  The following conditions
   "A basic One-Sentence-Per-Line mode which defines an electric SPC key."
   :lighter " OSPL" :keymap electric-ospl-mode-map
   (if electric-ospl-mode
-      (progn
-        (setq-local electric-ospl-original-binding (let ((electric-ospl-mode nil))
-                                                     (key-binding (kbd "SPC")))
-                    electric-ospl-original-fill-paragraph fill-paragraph-function
-                    fill-paragraph-function #'electric-ospl-fill-ospl)
-        (message "Enabled `electric-ospl-mode'."))
-    (message "Disabled `electric-ospl-mode'.")
+      (setq-local electric-ospl-original-binding (let ((electric-ospl-mode nil))
+                                                   (key-binding (kbd "SPC")))
+                  electric-ospl-original-fill-paragraph fill-paragraph-function
+                  fill-paragraph-function #'electric-ospl-fill-ospl)
     (setq-local fill-paragraph-function electric-ospl-original-fill-paragraph)))
 
 ;;;###autoload
