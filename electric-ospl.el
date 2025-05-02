@@ -1,7 +1,7 @@
 ;;; electric-ospl.el --- Electric OSPL Mode -*- lexical-binding: t -*-
 
 ;; Author: Samuel W. Flint <swflint@flintfam.org>
-;; Version: 3.2.0
+;; Version: 3.3.0
 ;; Package-Requires: ((emacs "26.1"))
 ;; Keywords: convenience, text
 ;; URL: https://git.sr.ht/~swflint/electric-ospl-mode
@@ -391,26 +391,31 @@ If ARG is passed, call the regular `fill-paragraph' instead."
 ;;; Global Minor Mode Safety
 
 (defun electric-ospl-allowed-mode-p ()
-  "Should `global-electric-ospl-mode' enable the local mode in the current buffer?
+  "Should `electric-ospl-mode' be enabled in the current buffer?
 
-The mode will not be enabled in the following cases:
+This is used to determine if `electric-ospl-mode' applies to a buffer
+when `global-electric-ospl-mode' is enabled.  The following conditions
+*prevent* `electric-ospl-mode' from being enabled:
 
- - In the minibuffer
- - `special' modes
+ - Buffers where `electric-ospl-forbid' is non-nil
+ - Buffers whose mode is derived from `special-mode'
  - `fundamental-mode'
- - Ephemeral Buffers
- - Major modes excluded by `electric-ospl-global-modes'
- - The binding of SPC is not in `electric-ospl-allowed-override-commands'."
+ - Ephemeral Buffers (see Info node `(elisp)Buffer Names')
+ - Minibuffers
+ - Buffers where the binding of SPC is not in
+   `electric-ospl-allowed-override-commands'
+ - Major modes excluded by `electric-ospl-global-modes' (which see)."
   (and (not electric-ospl-forbid)
+       (not (derived-mode-p 'special-mode))
+       (not (eq major-mode 'fundamental-mode))
+       (not (eq (aref (buffer-name (current-buffer)) 0) ?\s))
+       (not (minibufferp))
        (cl-member (key-binding (kbd "SPC")) electric-ospl-allowed-override-commands)
        (pcase electric-ospl-global-modes
          (`t t)
          (`(not . ,modes) (and (not (memq major-mode modes))
                                (not (apply #'derived-mode-p modes))))
-         (modes (memq major-mode modes)))
-       (not (or (minibufferp)
-                (eq major-mode 'fundamental-mode)
-                (string-prefix-p " " (buffer-name))))))
+         (modes (memq major-mode modes)))))
 
 (defun electric-ospl-enable-mode ()
   "Conditionally enable `electric-ospl-mode' in the current buffer.
