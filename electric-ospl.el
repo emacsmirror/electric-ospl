@@ -277,6 +277,13 @@ others may be appropriate as well."
   :group 'electric-ospl
   :type 'hook)
 
+(defcustom electric-ospl-enable-fill-paragraph t
+  "Enable setting `fill-paragraph-function'."
+  :group 'electric-ospl
+  :type 'boolean
+  :local t
+  :safe #'booleanp)
+
 
 ;;; At Abbreviation?
 
@@ -438,12 +445,19 @@ when `global-electric-ospl-mode' is enabled.  The following conditions
 (define-minor-mode electric-ospl-mode
   "A basic One-Sentence-Per-Line mode which defines an electric SPC key."
   :lighter " OSPL" :keymap electric-ospl-mode-map
-  (if electric-ospl-mode
-      (setq-local electric-ospl-original-binding (let ((electric-ospl-mode nil))
-                                                   (key-binding (kbd "SPC")))
-                  electric-ospl-original-fill-paragraph fill-paragraph-function
-                  fill-paragraph-function #'electric-ospl-fill-ospl)
-    (setq-local fill-paragraph-function electric-ospl-original-fill-paragraph)))
+  (cond
+   ((and electric-ospl-mode
+         electric-ospl-enable-fill-paragraph)
+    (setq-local electric-ospl-original-binding (let ((electric-ospl-mode nil))
+                                                 (key-binding (kbd "SPC")))
+                electric-ospl-original-fill-paragraph fill-paragraph-function
+                fill-paragraph-function #'electric-ospl-fill-ospl))
+   (electric-ospl-mode
+    (setq-local electric-ospl-original-binding (let ((electric-ospl-mode nil))
+                                                 (key-binding (kbd "SPC")))))
+   ((and (not electric-ospl-mode)
+         electric-ospl-original-fill-paragraph)
+    (setq-local fill-paragraph-function electric-ospl-original-fill-paragraph))))
 
 ;;;###autoload
 (define-globalized-minor-mode global-electric-ospl-mode electric-ospl-mode
